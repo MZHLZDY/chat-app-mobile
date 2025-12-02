@@ -7,9 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../context/AuthContext';
 import { apiClient } from '../api/client'; // Import client axios kita
 
-export default function ChatListScreen() {
-  const [users, setUsers] = useState([]); // Tempat menyimpan data teman
-  const [loading, setLoading] = useState(true); // Status loading
+export default function ChatListScreen({ navigation }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
   const { logout } = useContext(AuthContext);
 
@@ -49,7 +49,9 @@ export default function ChatListScreen() {
     const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=random&color=fff`;
 
     return (
-      <TouchableOpacity style={styles.chatItem} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.chatItem} 
+      activeOpacity={0.7}
+      onPress={() => navigation.navigate('ChatRoom', { contact: item })}>
         {/* Avatar dari UI Avatars */}
         <Image source={{ uri: avatarUrl }} style={styles.avatar} />
 

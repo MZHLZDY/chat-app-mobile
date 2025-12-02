@@ -9,9 +9,10 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ChatListScreen from './src/screens/ChatlistScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import ChatRoomScreen from './src/screens/ChatroomScreen';
 // --- IMPORT CONTEXT & API CLIENT ---
 import { AuthContext } from './src/context/AuthContext';
-import { apiClient } from './src/api/client'; // <--- KITA PAKAI INI SUPAYA KONEK DENGAN CHAT LIST
+import { apiClient } from './src/api/client';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,14 +24,11 @@ export default function App() {
   const authContext = useMemo(() => ({
     login: async (token, userData) => {
       try {
-        // Simpan token ke HP
         await AsyncStorage.setItem('userToken', token);
         if (userData) {
           await AsyncStorage.setItem('userData', JSON.stringify(userData));
         }
         
-        // SUNTIKKAN TOKEN KE AXIOS (PENTING!)
-        // Supaya semua request di halaman lain otomatis pakai token ini
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         setUserToken(token);
@@ -45,15 +43,12 @@ export default function App() {
         console.log("Server logout error (mungkin offline), tapi lanjut hapus lokal.");
       }
 
-      // 2. Hapus data di HP (Wajib)
       try {
         await AsyncStorage.removeItem('userToken');
         await AsyncStorage.removeItem('userData');
         
-        // Hapus header token dari axios
         delete apiClient.defaults.headers.common['Authorization'];
         
-        // Update state supaya layar berganti ke Login
         setUserToken(null);
       } catch (e) {
         console.log("Gagal hapus storage:", e);
@@ -65,14 +60,9 @@ export default function App() {
   useEffect(() => {
     const bootstrapAsync = async () => {
       try {
-        // Ambil token dari penyimpanan
         const token = await AsyncStorage.getItem('userToken');
 
         if (token) {
-          // Validasi sederhana: Jika token ada, kita anggap login dulu
-          // (Nanti bisa ditambah request ke /user untuk validasi ke server)
-          
-          // SUNTIKKAN TOKEN LAGI
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           setUserToken(token);
         }
@@ -100,7 +90,6 @@ export default function App() {
         <StatusBar backgroundColor="#075E54" barStyle="light-content" />
         <Stack.Navigator>
           {userToken == null ? (
-            // === JIKA BELUM LOGIN ===
             <>
               <Stack.Screen name="Login" component={LoginScreen} options={{headerShown: false}} />
               <Stack.Screen name="Register" component={RegisterScreen} />
@@ -112,6 +101,13 @@ export default function App() {
             
             {/* Halaman Profile Baru */}
             <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+
+            {/* Halaman chat */}
+            <Stack.Screen 
+                 name="ChatRoom" 
+                 component={ChatRoomScreen} 
+                 options={{ headerShown: false }} 
+              />
           </>
           )}
         </Stack.Navigator>
