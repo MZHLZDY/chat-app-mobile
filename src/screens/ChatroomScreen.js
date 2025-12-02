@@ -57,19 +57,23 @@ export default function ChatRoomScreen({ route, navigation }) {
           .here((users) => {
               console.log("User online:", users);
           })
-          .listen('.MessageSent', (e) => {
-             console.log("EVENT MASUK:", e);
-             
-             const incomingMessage = e.message; 
+          .listen('.MessageSent', (e) => { 
+            console.log("EVENT MASUK:", e);
+            const incomingMessage = e.message; 
 
-             setMessages((prev) => {
-               const exists = prev.find(m => m.id === incomingMessage.id);
-               if (exists) return prev;
-               return [...prev, incomingMessage];
-             });
-             
-             setTimeout(() => flatListRef.current?.scrollToEnd(), 100);
-          })
+            if (incomingMessage.sender_id === currentUserId) {
+                return; 
+            }
+
+            setMessages((prev) => {
+                const exists = prev.find(m => m.id === incomingMessage.id);
+                if (exists) return prev;
+                
+                return [...prev, incomingMessage];
+            });
+            
+            setTimeout(() => flatListRef.current?.scrollToEnd(), 100);
+        })
           .error((err) => {
               console.log("Echo Error:", err);
           });
@@ -95,22 +99,33 @@ export default function ChatRoomScreen({ route, navigation }) {
   const handleSend = async () => {
     if (text.trim() === '') return;
 
+    const tempId = 'temp-' + Math.random().toString();
+    
     const tempMsg = {
-      id: Math.random().toString(),
+      id: tempId, 
       message: text,
       sender_id: myId,
       receiver_id: contact.id,
       created_at: new Date().toISOString(),
+      is_pending: true,
     };
 
     setMessages(prev => [...prev, tempMsg]);
     setText('');
     
     try {
-      await apiClient.post('/messages', {
+      const response = await apiClient.post('/messages', {
         receiver_id: contact.id,
         message: tempMsg.message
       });
+      
+      setMessages(prev => prev.map(msg => {
+          if (msg.id === tempId) {
+              return response.data;
+          }
+          return msg;
+      }));
+
     } catch (error) {
       console.log("Gagal kirim:", error);
     }
